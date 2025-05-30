@@ -18,8 +18,7 @@
             overflow: hidden;
         }
         
-        /* 极简模式 - 几乎全屏显示目标网站 */
-        .minimal-mode {
+        .container {
             position: fixed;
             top: 0;
             left: 0;
@@ -27,7 +26,7 @@
             height: 100vh;
         }
         
-        .minimal-mode .top-bar {
+        .top-bar {
             height: 30px;
             background: #f8f9fa;
             border-bottom: 1px solid #e9ecef;
@@ -37,59 +36,23 @@
             padding: 0 15px;
             font-size: 12px;
             color: #6c757d;
+            transition: opacity 0.3s;
         }
         
-        .minimal-mode .content-frame {
+        .top-bar.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .content-frame {
             width: 100%;
             height: calc(100vh - 30px);
             border: none;
             display: block;
         }
         
-        /* 标准模式 - 保留一些装饰 */
-        .standard-mode {
-            padding: 10px;
-        }
-        
-        .standard-mode .header {
-            background: #fff;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 5px;
-        }
-        
-        .standard-mode .header h1 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .standard-mode .header p {
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .standard-mode .content-frame {
-            width: 100%;
-            height: calc(100vh - 120px);
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        /* 隐藏模式 - 完全隐藏中转页面元素 */
-        .hidden-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+        .content-frame.fullscreen {
             height: 100vh;
-        }
-        
-        .hidden-mode .content-frame {
-            width: 100%;
-            height: 100vh;
-            border: none;
-            display: block;
         }
         
         .open-btn {
@@ -102,24 +65,36 @@
             font-size: 11px;
         }
         
-        .mode-switch {
+        .controls {
             position: fixed;
-            top: 10px;
+            bottom: 10px;
             right: 10px;
             z-index: 9999;
             background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 15px;
-            cursor: pointer;
-            font-size: 12px;
+            border-radius: 20px;
+            padding: 5px;
+            display: flex;
+            gap: 5px;
             opacity: 0.3;
             transition: opacity 0.3s;
         }
         
-        .mode-switch:hover {
+        .controls:hover {
             opacity: 1;
+        }
+        
+        .control-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: #333;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .loading {
@@ -129,64 +104,61 @@
             transform: translate(-50%, -50%);
             color: #666;
             font-size: 14px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
-        @media (max-width: 768px) {
-            .standard-mode {
-                padding: 5px;
-            }
-            
-            .standard-mode .header {
-                padding: 10px;
-            }
-            
-            .standard-mode .content-frame {
-                height: calc(100vh - 100px);
-            }
+        #proxy-frame {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <!-- 模式切换按钮 -->
-    <button class="mode-switch" onclick="switchMode()" title="切换显示模式">模式</button>
+    <!-- 控制按钮 -->
+    <div class="controls">
+        <button class="control-btn" onclick="toggleTopBar()" title="显示/隐藏顶栏">T</button>
+        <button class="control-btn" onclick="openInBrowser()" title="在浏览器中打开">B</button>
+        <button class="control-btn" onclick="refreshPage()" title="刷新页面">R</button>
+    </div>
     
     <!-- 加载提示 -->
     <div id="loading" class="loading">正在加载...</div>
     
-    <!-- 极简模式 -->
-    <div id="minimal-container" class="minimal-mode" style="display: none;">
-        <div class="top-bar">
+    <!-- 主容器 -->
+    <div class="container">
+        <div id="top-bar" class="top-bar">
             <span>文档预览</span>
             <button class="open-btn" onclick="openInBrowser()">浏览器打开</button>
         </div>
-        <iframe id="minimal-frame" class="content-frame"></iframe>
+        <iframe id="content-frame" name="content-frame" class="content-frame"></iframe>
     </div>
     
-    <!-- 标准模式 -->
-    <div id="standard-container" class="standard-mode" style="display: none;">
-        <div class="header">
-            <h1>📄 文档预览</h1>
-            <p>安全预览文档内容</p>
-        </div>
-        <iframe id="standard-frame" class="content-frame"></iframe>
-    </div>
-    
-    <!-- 隐藏模式 -->
-    <div id="hidden-container" class="hidden-mode" style="display: none;">
-        <iframe id="hidden-frame" class="content-frame"></iframe>
-    </div>
+    <!-- 用于处理跳转的隐藏iframe -->
+    <iframe id="proxy-frame" name="proxy-frame"></iframe>
 
     <script>
-        // 显示模式：0=极简, 1=标准, 2=隐藏
-        let currentMode = 0;
-        
         // 获取目标URL
         const getTargetUrl = () => {
             const urlParams = new URLSearchParams(window.location.search);
+            
+            // 支持新的参数格式: ?c=BASE64_ENCODED_URL
+            const encodedUrl = urlParams.get('c');
+            if (encodedUrl) {
+                try {
+                    return atob(encodedUrl);
+                } catch (e) {
+                    console.error('Base64 decode failed:', e);
+                    return 'https://example.com';
+                }
+            }
+            
+            // 兼容旧的参数格式
             const target = urlParams.get('url') || urlParams.get('u') || urlParams.get('link');
             
-            // 支持base64编码的URL
-            if (target && target.includes('base64:')) {
+            // 支持旧的base64编码格式
+            if (target && target.startsWith('base64:')) {
                 try {
                     return atob(target.replace('base64:', ''));
                 } catch (e) {
@@ -201,73 +173,18 @@
         const isWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
         const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // 切换显示模式
-        const switchMode = () => {
-            currentMode = (currentMode + 1) % 3;
-            showCurrentMode();
-            loadContent();
-        };
-        
-        // 显示当前模式
-        const showCurrentMode = () => {
-            const containers = ['minimal-container', 'standard-container', 'hidden-container'];
+        // 切换顶栏显示
+        const toggleTopBar = () => {
+            const topBar = document.getElementById('top-bar');
+            const contentFrame = document.getElementById('content-frame');
             
-            containers.forEach((id, index) => {
-                const element = document.getElementById(id);
-                element.style.display = index === currentMode ? 'block' : 'none';
-            });
-            
-            // 更新按钮文本
-            const modeNames = ['极简', '标准', '隐藏'];
-            document.querySelector('.mode-switch').textContent = modeNames[currentMode];
-        };
-        
-        // 加载内容
-        const loadContent = () => {
-            const targetUrl = getTargetUrl();
-            const frameIds = ['minimal-frame', 'standard-frame', 'hidden-frame'];
-            const currentFrame = document.getElementById(frameIds[currentMode]);
-            
-            if (!currentFrame) return;
-            
-            // 移除所有sandbox限制，允许完整交互
-            currentFrame.removeAttribute('sandbox');
-            
-            // 设置iframe属性以支持完整功能
-            currentFrame.setAttribute('allowfullscreen', 'true');
-            currentFrame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media');
-            
-            // 加载目标URL
-            currentFrame.src = targetUrl;
-            
-            // 处理加载完成
-            currentFrame.onload = () => {
-                document.getElementById('loading').style.display = 'none';
-                
-                // 尝试隐藏滚动条（如果可能）
-                try {
-                    const frameDoc = currentFrame.contentDocument || currentFrame.contentWindow.document;
-                    if (frameDoc) {
-                        const style = frameDoc.createElement('style');
-                        style.textContent = `
-                            body { 
-                                margin: 0 !important; 
-                                padding: 0 !important;
-                            }
-                            ::-webkit-scrollbar { width: 0px; background: transparent; }
-                        `;
-                        frameDoc.head.appendChild(style);
-                    }
-                } catch (e) {
-                    // 跨域限制，忽略错误
-                    console.log('Cross-origin restrictions apply');
-                }
-            };
-            
-            // 处理加载错误
-            currentFrame.onerror = () => {
-                document.getElementById('loading').innerHTML = '加载失败，请尝试直接访问';
-            };
+            if (topBar.classList.contains('hidden')) {
+                topBar.classList.remove('hidden');
+                contentFrame.classList.remove('fullscreen');
+            } else {
+                topBar.classList.add('hidden');
+                contentFrame.classList.add('fullscreen');
+            }
         };
         
         // 在浏览器中打开
@@ -282,53 +199,251 @@
             }
         };
         
-        // 自动选择最佳模式
-        const autoSelectMode = () => {
-            if (isWeChat()) {
-                // 微信中使用极简模式
-                currentMode = 0;
-            } else if (isMobile()) {
-                // 移动端使用隐藏模式
-                currentMode = 2;
-            } else {
-                // 桌面端使用标准模式
-                currentMode = 1;
+        // 刷新页面
+        const refreshPage = () => {
+            loadContent();
+        };
+        
+        // 处理iframe内部链接点击
+        const setupLinkInterception = () => {
+            try {
+                const frame = document.getElementById('content-frame');
+                const frameDoc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (!frameDoc) return; // 跨域限制
+                
+                // 拦截所有链接点击
+                frameDoc.addEventListener('click', (e) => {
+                    const link = e.target.closest('a');
+                    if (!link) return;
+                    
+                    const href = link.getAttribute('href');
+                    if (!href || href.startsWith('#')) return;
+                    
+                    // 阻止默认行为
+                    e.preventDefault();
+                    
+                    // 在当前iframe中打开链接
+                    frame.src = new URL(href, frame.src).href;
+                });
+            } catch (e) {
+                console.log('Cannot access iframe content due to cross-origin restrictions');
             }
+        };
+        
+        // 处理iframe内部表单提交
+        const setupFormInterception = () => {
+            try {
+                const frame = document.getElementById('content-frame');
+                const frameDoc = frame.contentDocument || frame.contentWindow.document;
+                
+                if (!frameDoc) return; // 跨域限制
+                
+                // 拦截所有表单提交
+                frameDoc.addEventListener('submit', (e) => {
+                    const form = e.target;
+                    
+                    // 修改表单target为当前iframe
+                    form.target = 'content-frame';
+                });
+            } catch (e) {
+                console.log('Cannot access iframe content due to cross-origin restrictions');
+            }
+        };
+        
+        // 加载内容
+        const loadContent = () => {
+            const targetUrl = getTargetUrl();
+            const frame = document.getElementById('content-frame');
             
-            // 检查URL参数中的模式设置
-            const urlParams = new URLSearchParams(window.location.search);
-            const modeParam = urlParams.get('mode');
-            if (modeParam && ['0', '1', '2'].includes(modeParam)) {
-                currentMode = parseInt(modeParam);
+            // 显示加载提示
+            document.getElementById('loading').style.display = 'block';
+            
+            // 完全移除所有限制
+            frame.removeAttribute('sandbox');
+            
+            // 设置允许的功能
+            frame.setAttribute('allowfullscreen', 'true');
+            frame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media; fullscreen');
+            
+            // 允许iframe内容控制父页面
+            frame.setAttribute('allowtransparency', 'true');
+            
+            // 加载目标URL
+            frame.src = targetUrl;
+            
+            // 处理加载完成
+            frame.onload = () => {
+                document.getElementById('loading').style.display = 'none';
+                
+                // 尝试设置链接和表单拦截
+                setTimeout(() => {
+                    setupLinkInterception();
+                    setupFormInterception();
+                }, 1000);
+                
+                // 尝试注入辅助脚本
+                injectHelperScript(frame);
+            };
+            
+            // 处理加载错误
+            frame.onerror = () => {
+                document.getElementById('loading').innerHTML = '加载失败，请尝试直接访问';
+            };
+        };
+        
+        // 注入辅助脚本到iframe
+        const injectHelperScript = (frame) => {
+            try {
+                const frameWindow = frame.contentWindow;
+                const frameDoc = frameWindow.document;
+                
+                // 如果无法访问iframe内容，则退出
+                if (!frameDoc) return;
+                
+                // 创建辅助脚本
+                const script = frameDoc.createElement('script');
+                script.textContent = `
+                    // 重写window.open方法
+                    const originalOpen = window.open;
+                    window.open = function(url, target, features) {
+                        // 如果是相对URL，转换为绝对URL
+                        if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
+                            url = new URL(url, window.location.href).href;
+                        }
+                        
+                        // 在当前iframe中打开链接
+                        if (url) {
+                            window.location.href = url;
+                            return window;
+                        }
+                        
+                        // 否则使用原始方法
+                        return originalOpen.apply(this, arguments);
+                    };
+                    
+                    // 修复表单提交
+                    document.addEventListener('submit', function(e) {
+                        const form = e.target;
+                        if (!form.target) {
+                            form.target = '_self';
+                        }
+                    });
+                    
+                    // 修复location.href赋值
+                    const originalDescriptor = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href');
+                    if (originalDescriptor && originalDescriptor.set) {
+                        const originalSet = originalDescriptor.set;
+                        Object.defineProperty(window.location, 'href', {
+                            set: function(url) {
+                                // 如果是相对URL，转换为绝对URL
+                                if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
+                                    url = new URL(url, window.location.href).href;
+                                }
+                                return originalSet.call(this, url);
+                            },
+                            get: originalDescriptor.get,
+                            configurable: true
+                        });
+                    }
+                    
+                    // 通知父页面已加载
+                    try {
+                        window.parent.postMessage({ type: 'FRAME_LOADED' }, '*');
+                    } catch (e) {}
+                `;
+                
+                // 添加到iframe文档
+                frameDoc.head.appendChild(script);
+                
+            } catch (e) {
+                console.log('Cannot inject script due to cross-origin restrictions');
+                
+                // 跨域情况下，使用替代方案
+                useFallbackMethod(frame);
+            }
+        };
+        
+        // 跨域情况下的替代方案
+        const useFallbackMethod = (frame) => {
+            // 监听消息
+            window.addEventListener('message', (event) => {
+                try {
+                    const data = event.data;
+                    
+                    // 处理iframe内部的导航请求
+                    if (data && data.type === 'NAVIGATE') {
+                        frame.src = data.url;
+                    }
+                } catch (e) {
+                    console.error('Error processing message:', e);
+                }
+            });
+        };
+        
+        // 自动隐藏顶栏（移动设备）
+        const autoHideTopBar = () => {
+            if (isMobile()) {
+                setTimeout(() => {
+                    toggleTopBar();
+                }, 2000);
             }
         };
         
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
-            autoSelectMode();
-            showCurrentMode();
             loadContent();
+            autoHideTopBar();
             
-            // 5秒后自动隐藏模式切换按钮（在隐藏模式下）
-            if (currentMode === 2) {
-                setTimeout(() => {
-                    document.querySelector('.mode-switch').style.display = 'none';
-                }, 5000);
-            }
+            // 监听键盘快捷键
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+T 切换顶栏
+                if (e.ctrlKey && e.key === 't') {
+                    e.preventDefault();
+                    toggleTopBar();
+                }
+                
+                // Ctrl+O 在浏览器中打开
+                if (e.ctrlKey && e.key === 'o') {
+                    e.preventDefault();
+                    openInBrowser();
+                }
+                
+                // Ctrl+R 刷新页面
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    refreshPage();
+                }
+            });
         });
-        
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            // Ctrl+M 切换模式
-            if (e.ctrlKey && e.key === 'm') {
-                e.preventDefault();
-                switchMode();
+    </script>
+    
+    <!-- 处理跨域通信的辅助脚本 -->
+    <script>
+        // 创建一个全局函数，用于处理iframe内部的导航
+        window.handleFrameNavigation = (url) => {
+            const frame = document.getElementById('content-frame');
+            if (frame) {
+                frame.src = url;
             }
-            
-            // Ctrl+O 在浏览器中打开
-            if (e.ctrlKey && e.key === 'o') {
-                e.preventDefault();
-                openInBrowser();
+        };
+        
+        // 监听来自iframe的消息
+        window.addEventListener('message', (event) => {
+            try {
+                const data = event.data;
+                
+                if (data && data.type === 'FRAME_LOADED') {
+                    // iframe已加载完成
+                    document.getElementById('loading').style.display = 'none';
+                }
+                
+                if (data && data.type === 'NAVIGATE') {
+                    // iframe请求导航到新URL
+                    handleFrameNavigation(data.url);
+                }
+            } catch (e) {
+                console.error('Error processing message:', e);
             }
         });
     </script>
