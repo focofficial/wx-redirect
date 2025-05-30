@@ -99,11 +99,11 @@
     </div>
     
     <!-- 混合内容错误备用显示 -->
-<!--     <div id="error-container" class="error-container" style="display: none;">
+    <div id="error-container" class="error-container" style="display: none;">
         <div class="error-icon">✓</div>
         <h2 class="error-title">正在载入页面</h2>
         <button class="error-button" onclick="openInBrowser()">立即进入</button>
-    </div> -->
+    </div>
 
     <script>
         // 获取目标URL
@@ -163,7 +163,7 @@
         // 显示备用界面
         const showFallbackUI = () => {
             document.getElementById('loading').style.display = 'none';
-            // document.getElementById('error-container').style.display = 'flex';
+            document.getElementById('error-container').style.display = 'flex';
             document.querySelector('.container').style.display = 'none';
         };
         
@@ -285,7 +285,7 @@
                     e.message.includes('blocked')
                 )) {
                     console.log('Mixed content error detected');
-                    showFallbackUI();
+                    // showFallbackUI();
                 }
             }, true);
             
@@ -498,7 +498,7 @@
                     
                     if (data && data.type === 'MIXED_CONTENT_ERROR') {
                         // 检测到混合内容错误
-                        showFallbackUI();
+                        // showFallbackUI();
                     }
                     
                     // 处理从iframe同步回来的存储
