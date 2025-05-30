@@ -274,6 +274,7 @@
             
             // 处理加载错误
             frame.onerror = () => {
+                debugger;
                 showFallbackUI();
             };
             
@@ -498,7 +499,7 @@
                     
                     if (data && data.type === 'MIXED_CONTENT_ERROR') {
                         // 检测到混合内容错误
-                        // showFallbackUI();
+                        showFallbackUI();
                     }
                     
                     // 处理从iframe同步回来的存储
