@@ -286,23 +286,16 @@
                     e.message.includes('blocked')
                 )) {
                     console.log('Mixed content error detected');
-                    // showFallbackUI();
+                    showFallbackUI();
                 }
             }, true);
             
             // 设置超时，如果加载时间过长则显示备用界面
             setTimeout(() => {
-                try {
-                    // 检查iframe是否成功加载
-                    const iframeDoc = frame.contentDocument || frame.contentWindow.document;
-                    if (!iframeDoc || !iframeDoc.body) {
-                        showFallbackUI();
-                    }
-                } catch (e) {
-                    // 如果出现跨域错误，可能是混合内容问题
-                    if (targetUrl.startsWith('http:')) {
-                        showFallbackUI();
-                    }
+                // 避免跨域访问 iframe.document，改为判断 loading 状态
+                const loadingVisible = document.getElementById('loading').style.display !== 'none';
+                if (loadingVisible) {
+                    showFallbackUI();
                 }
             }, 15000);
         };
