@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档预览</title>
     <meta name="description" content="文档预览工具">
+    <!-- 尝试允许混合内容 - 注意：这不是所有浏览器都支持 -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <style>
         * {
             margin: 0;
@@ -110,6 +112,44 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
+        .error-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .error-icon {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+        
+        .error-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .error-button {
+            background: #5cb85c;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
         #proxy-frame {
             display: none;
         }
@@ -133,6 +173,13 @@
             <button class="open-btn" onclick="openInBrowser()">浏览器打开</button>
         </div>
         <iframe id="content-frame" name="content-frame" class="content-frame"></iframe>
+    </div>
+    
+    <!-- 混合内容错误备用显示 -->
+    <div id="error-container" class="error-container" style="display: none;">
+        <div class="error-icon">✓</div>
+        <h2 class="error-title">正在载入页面</h2>
+        <button class="error-button" onclick="openInBrowser()">立即进入</button>
     </div>
     
     <!-- 用于处理跳转的隐藏iframe -->
@@ -167,6 +214,14 @@
             }
             
             return target ? decodeURIComponent(target) : 'https://example.com';
+        };
+        
+        // 尝试将HTTP URL转换为HTTPS
+        const tryHttpsUrl = (url) => {
+            if (url.startsWith('http:')) {
+                return url.replace('http:', 'https:');
+            }
+            return url;
         };
         
         // 检测环境
@@ -251,13 +306,25 @@
             }
         };
         
+        // 显示备用界面
+        const showFallbackUI = () => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-container').style.display = 'flex';
+            document.querySelector('.container').style.display = 'none';
+        };
+        
         // 加载内容
         const loadContent = () => {
-            const targetUrl = getTargetUrl();
+            let targetUrl = getTargetUrl();
             const frame = document.getElementById('content-frame');
             
             // 显示加载提示
             document.getElementById('loading').style.display = 'block';
+            document.getElementById('error-container').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+            
+            // 尝试将HTTP转换为HTTPS
+            const httpsUrl = tryHttpsUrl(targetUrl);
             
             // 完全移除所有限制
             frame.removeAttribute('sandbox');
@@ -270,7 +337,7 @@
             frame.setAttribute('allowtransparency', 'true');
             
             // 加载目标URL
-            frame.src = targetUrl;
+            frame.src = httpsUrl;
             
             // 处理加载完成
             frame.onload = () => {
@@ -288,8 +355,36 @@
             
             // 处理加载错误
             frame.onerror = () => {
-                document.getElementById('loading').innerHTML = '加载失败，请尝试直接访问';
+                showFallbackUI();
             };
+            
+            // 监听混合内容错误
+            window.addEventListener('error', function(e) {
+                if (e.message && (
+                    e.message.includes('Mixed Content') || 
+                    e.message.includes('insecure') ||
+                    e.message.includes('blocked')
+                )) {
+                    console.log('Mixed content error detected');
+                    showFallbackUI();
+                }
+            }, true);
+            
+            // 设置超时，如果加载时间过长则显示备用界面
+            setTimeout(() => {
+                try {
+                    // 检查iframe是否成功加载
+                    const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+                    if (!iframeDoc || !iframeDoc.body) {
+                        showFallbackUI();
+                    }
+                } catch (e) {
+                    // 如果出现跨域错误，可能是混合内容问题
+                    if (targetUrl.startsWith('http:')) {
+                        showFallbackUI();
+                    }
+                }
+            }, 5000);
         };
         
         // 注入辅助脚本到iframe
@@ -312,6 +407,11 @@
                             url = new URL(url, window.location.href).href;
                         }
                         
+                        // 如果是HTTP URL，尝试转换为HTTPS
+                        if (url && url.startsWith('http:')) {
+                            url = url.replace('http:', 'https:');
+                        }
+                        
                         // 在当前iframe中打开链接
                         if (url) {
                             window.location.href = url;
@@ -328,6 +428,12 @@
                         if (!form.target) {
                             form.target = '_self';
                         }
+                        
+                        // 如果表单action是HTTP，尝试转换为HTTPS
+                        const action = form.getAttribute('action');
+                        if (action && action.startsWith('http:')) {
+                            form.setAttribute('action', action.replace('http:', 'https:'));
+                        }
                     });
                     
                     // 修复location.href赋值
@@ -340,6 +446,12 @@
                                 if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
                                     url = new URL(url, window.location.href).href;
                                 }
+                                
+                                // 如果是HTTP URL，尝试转换为HTTPS
+                                if (url && url.startsWith('http:')) {
+                                    url = url.replace('http:', 'https:');
+                                }
+                                
                                 return originalSet.call(this, url);
                             },
                             get: originalDescriptor.get,
@@ -351,6 +463,14 @@
                     try {
                         window.parent.postMessage({ type: 'FRAME_LOADED' }, '*');
                     } catch (e) {}
+                    
+                    // 修复所有链接
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const links = document.querySelectorAll('a[href^="http:"]');
+                        links.forEach(link => {
+                            link.href = link.href.replace('http:', 'https:');
+                        });
+                    });
                 `;
                 
                 // 添加到iframe文档
@@ -373,7 +493,12 @@
                     
                     // 处理iframe内部的导航请求
                     if (data && data.type === 'NAVIGATE') {
-                        frame.src = data.url;
+                        let url = data.url;
+                        // 如果是HTTP URL，尝试转换为HTTPS
+                        if (url && url.startsWith('http:')) {
+                            url = url.replace('http:', 'https:');
+                        }
+                        frame.src = url;
                     }
                 } catch (e) {
                     console.error('Error processing message:', e);
@@ -424,6 +549,10 @@
         window.handleFrameNavigation = (url) => {
             const frame = document.getElementById('content-frame');
             if (frame) {
+                // 如果是HTTP URL，尝试转换为HTTPS
+                if (url && url.startsWith('http:')) {
+                    url = url.replace('http:', 'https:');
+                }
                 frame.src = url;
             }
         };
@@ -441,6 +570,11 @@
                 if (data && data.type === 'NAVIGATE') {
                     // iframe请求导航到新URL
                     handleFrameNavigation(data.url);
+                }
+                
+                if (data && data.type === 'MIXED_CONTENT_ERROR') {
+                    // 检测到混合内容错误
+                    showFallbackUI();
                 }
             } catch (e) {
                 console.error('Error processing message:', e);
