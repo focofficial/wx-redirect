@@ -2,60 +2,37 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档预览</title>
     <meta name="description" content="文档预览工具">
-    <meta name="keywords" content="文档,预览,查看">
-    <!-- 微信分享优化 -->
-    <meta property="og:title" content="文档预览">
-    <meta property="og:description" content="文档预览工具">
-    <meta property="og:type" content="website">
     <!-- 尝试允许混合内容 -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
-    <!-- 防止微信缓存 -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            -webkit-overflow-scrolling: touch;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             background: #fff;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            overflow: hidden;
         }
         
         .container {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
-            z-index: 1;
+            height: 100vh;
         }
         
         .content-frame {
             width: 100%;
-            height: 100%;
+            height: 100vh;
             border: none;
             display: block;
-            background: #fff;
         }
         
         .loading {
@@ -64,31 +41,12 @@
             left: 50%;
             transform: translate(-50%, -50%);
             color: #666;
-            font-size: 16px;
-            background: rgba(255,255,255,0.95);
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            font-size: 14px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             z-index: 9999;
-            text-align: center;
-            min-width: 120px;
-        }
-        
-        .loading::after {
-            content: '';
-            display: block;
-            width: 20px;
-            height: 20px;
-            margin: 10px auto 0;
-            border: 2px solid #ddd;
-            border-top: 2px solid #666;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         
         .error-container {
@@ -102,106 +60,38 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 40px 20px;
+            padding: 20px;
             text-align: center;
             z-index: 9998;
         }
         
         .error-icon {
-            width: 60px;
-            height: 60px;
-            background: #5cb85c;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 48px;
+            color: #28a745;
             margin-bottom: 20px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
         }
         
         .error-title {
             font-size: 18px;
             color: #333;
             margin-bottom: 15px;
-            font-weight: 500;
-        }
-        
-        .error-subtitle {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.5;
         }
         
         .error-button {
             background: #5cb85c;
             color: white;
             border: none;
-            padding: 12px 40px;
-            border-radius: 6px;
+            padding: 10px 30px;
+            border-radius: 4px;
             font-size: 16px;
             cursor: pointer;
-            font-weight: 500;
-            min-width: 120px;
-            transition: background-color 0.3s;
-        }
-        
-        .error-button:active {
-            background: #4cae4c;
-        }
-        
-        /* 微信环境特殊样式 */
-        .wechat-tip {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 10000;
-            display: none;
-            align-items: flex-start;
-            justify-content: flex-end;
-            padding: 20px;
-        }
-        
-        .wechat-tip-content {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            max-width: 250px;
-            position: relative;
-            margin-top: 40px;
-        }
-        
-        .wechat-tip-arrow {
-            position: absolute;
-            top: -8px;
-            right: 20px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 8px solid white;
-        }
-        
-        .wechat-tip-text {
-            font-size: 14px;
-            color: #333;
-            line-height: 1.4;
-        }
-        
-        /* 隐藏微信底部工具栏影响 */
-        .container {
-            padding-bottom: env(safe-area-inset-bottom);
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <!-- 加载提示 -->
-    <div id="loading" class="loading">正在加载</div>
+    <div id="loading" class="loading">正在加载...</div>
     
     <!-- 主容器 -->
     <div class="container">
@@ -209,36 +99,18 @@
     </div>
     
     <!-- 混合内容错误备用显示 -->
-<!--     <div id="error-container" class="error-container" style="display: none;">
+    <div id="error-container" class="error-container" style="display: none;">
         <div class="error-icon">✓</div>
         <h2 class="error-title">正在载入页面</h2>
-        <p class="error-subtitle">如果页面未能正常显示，请点击下方按钮</p>
-        <button class="error-button" onclick="handleErrorButton()">立即进入</button>
-    </div> -->
-    
-    <!-- 微信提示 -->
-    <div id="wechat-tip" class="wechat-tip">
-        <div class="wechat-tip-content">
-            <div class="wechat-tip-arrow"></div>
-            <div class="wechat-tip-text">
-                请点击右上角菜单<br>
-                选择"在浏览器中打开"
-            </div>
-        </div>
+        <button class="error-button" onclick="openInBrowser()">立即进入</button>
     </div>
 
     <script>
-        // 微信环境检测
-        const isWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
-        const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isAndroid = () => /Android/.test(navigator.userAgent);
-        
         // 获取目标URL
         const getTargetUrl = () => {
             const urlParams = new URLSearchParams(window.location.search);
             
-            // 支持参数格式: ?c=BASE64_ENCODED_URL
+            // 支持新的参数格式: ?c=BASE64_ENCODED_URL
             const encodedUrl = urlParams.get('c');
             if (encodedUrl) {
                 try {
@@ -249,9 +121,10 @@
                 }
             }
             
-            // 兼容其他参数格式
-            const target = urlParams.get('url') || urlParams.get('u') || urlParams.get('link') || urlParams.get('target');
+            // 兼容旧的参数格式
+            const target = urlParams.get('url') || urlParams.get('u') || urlParams.get('link');
             
+            // 支持旧的base64编码格式
             if (target && target.startsWith('base64:')) {
                 try {
                     return atob(target.replace('base64:', ''));
@@ -271,28 +144,17 @@
             return url;
         };
         
-        // 显示微信提示
-        const showWeChatTip = () => {
-            const tip = document.getElementById('wechat-tip');
-            tip.style.display = 'flex';
-            
-            // 点击遮罩关闭提示
-            tip.addEventListener('click', () => {
-                tip.style.display = 'none';
-            });
-            
-            // 3秒后自动关闭
-            setTimeout(() => {
-                tip.style.display = 'none';
-            }, 3000);
-        };
+        // 检测环境
+        const isWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
+        const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // 处理错误按钮点击
-        const handleErrorButton = () => {
+        // 在浏览器中打开
+        const openInBrowser = () => {
             const targetUrl = getTargetUrl();
             
             if (isWeChat()) {
-                showWeChatTip();
+                // 微信环境提示
+                alert('请点击右上角菜单，选择"在浏览器中打开"');
             } else {
                 window.open(targetUrl, '_blank');
             }
@@ -311,35 +173,62 @@
                 const frameWindow = frame.contentWindow;
                 if (!frameWindow) return;
                 
-                const syncData = () => {
+                // 同步localStorage
+                const syncLocalStorage = () => {
                     try {
-                        // 同步localStorage
-                        const localStorage_data = {};
+                        const storage = {};
                         for (let i = 0; i < localStorage.length; i++) {
                             const key = localStorage.key(i);
-                            localStorage_data[key] = localStorage.getItem(key);
-                        }
-                        
-                        // 同步sessionStorage
-                        const sessionStorage_data = {};
-                        for (let i = 0; i < sessionStorage.length; i++) {
-                            const key = sessionStorage.key(i);
-                            sessionStorage_data[key] = sessionStorage.getItem(key);
+                            storage[key] = localStorage.getItem(key);
                         }
                         
                         frameWindow.postMessage({
-                            type: 'SYNC_STORAGE',
-                            localStorage: localStorage_data,
-                            sessionStorage: sessionStorage_data,
-                            cookies: document.cookie
+                            type: 'SYNC_LOCAL_STORAGE',
+                            storage: storage
                         }, '*');
                     } catch (e) {
-                        console.error('Error syncing storage:', e);
+                        console.error('Error syncing localStorage:', e);
                     }
                 };
                 
-                // 延迟同步，确保iframe完全加载
-                setTimeout(syncData, 3000);
+                // 同步sessionStorage
+                const syncSessionStorage = () => {
+                    try {
+                        const storage = {};
+                        for (let i = 0; i < sessionStorage.length; i++) {
+                            const key = sessionStorage.key(i);
+                            storage[key] = sessionStorage.getItem(key);
+                        }
+                        
+                        frameWindow.postMessage({
+                            type: 'SYNC_SESSION_STORAGE',
+                            storage: storage
+                        }, '*');
+                    } catch (e) {
+                        console.error('Error syncing sessionStorage:', e);
+                    }
+                };
+                
+                // 同步cookies
+                const syncCookies = () => {
+                    try {
+                        const cookies = document.cookie;
+                        
+                        frameWindow.postMessage({
+                            type: 'SYNC_COOKIES',
+                            cookies: cookies
+                        }, '*');
+                    } catch (e) {
+                        console.error('Error syncing cookies:', e);
+                    }
+                };
+                
+                // 执行同步
+                setTimeout(() => {
+                    syncLocalStorage();
+                    syncSessionStorage();
+                    syncCookies();
+                }, 2000);
                 
             } catch (e) {
                 console.error('Error accessing frame window:', e);
@@ -364,16 +253,10 @@
             
             // 设置允许的功能
             frame.setAttribute('allowfullscreen', 'true');
-            frame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media; fullscreen; clipboard-read; clipboard-write');
+            frame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media; fullscreen');
             
             // 允许iframe内容控制父页面
             frame.setAttribute('allowtransparency', 'true');
-            
-            // 微信环境特殊处理
-            if (isWeChat()) {
-                // 设置referrer策略
-                frame.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-            }
             
             // 加载目标URL
             frame.src = httpsUrl;
@@ -387,11 +270,6 @@
                 
                 // 同步缓存
                 syncStorageToTarget(frame);
-                
-                // 微信环境下的特殊处理
-                if (isWeChat()) {
-                    handleWeChatSpecific(frame);
-                }
             };
             
             // 处理加载错误
@@ -411,66 +289,21 @@
                 }
             }, true);
             
-            // 设置超时 - 微信环境下延长时间
-            const timeout = isWeChat() ? 20000 : 15000;
+            // 设置超时，如果加载时间过长则显示备用界面
             setTimeout(() => {
                 try {
+                    // 检查iframe是否成功加载
                     const iframeDoc = frame.contentDocument || frame.contentWindow.document;
-                    if (!iframeDoc || !iframeDoc.body || iframeDoc.body.children.length === 0) {
+                    if (!iframeDoc || !iframeDoc.body) {
                         showFallbackUI();
                     }
                 } catch (e) {
+                    // 如果出现跨域错误，可能是混合内容问题
                     if (targetUrl.startsWith('http:')) {
                         showFallbackUI();
                     }
                 }
-            }, timeout);
-        };
-        
-        // 微信环境特殊处理
-        const handleWeChatSpecific = (frame) => {
-            try {
-                // 禁用微信的手势返回
-                document.addEventListener('touchstart', function(e) {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                    }
-                });
-                
-                // 处理微信的页面可见性变化
-                document.addEventListener('visibilitychange', function() {
-                    if (!document.hidden) {
-                        // 页面重新可见时，检查iframe状态
-                        setTimeout(() => {
-                            try {
-                                const iframeDoc = frame.contentDocument || frame.contentWindow.document;
-                                if (!iframeDoc) {
-                                    // iframe可能被重置，重新加载
-                                    frame.src = frame.src;
-                                }
-                            } catch (e) {
-                                // 忽略跨域错误
-                            }
-                        }, 1000);
-                    }
-                });
-                
-                // 微信分享拦截
-                if (typeof WeixinJSBridge !== 'undefined') {
-                    WeixinJSBridge.on('menu:share:timeline', function() {
-                        // 拦截分享到朋友圈
-                        return false;
-                    });
-                    
-                    WeixinJSBridge.on('menu:share:appmessage', function() {
-                        // 拦截分享给朋友
-                        return false;
-                    });
-                }
-                
-            } catch (e) {
-                console.error('WeChat specific handling error:', e);
-            }
+            }, 15000);
         };
         
         // 注入辅助脚本到iframe
@@ -479,183 +312,169 @@
                 const frameWindow = frame.contentWindow;
                 const frameDoc = frameWindow.document;
                 
+                // 如果无法访问iframe内容，则退出
                 if (!frameDoc) return;
                 
+                // 创建辅助脚本
                 const script = frameDoc.createElement('script');
                 script.textContent = `
-                    (function() {
-                        // 检测微信环境
-                        const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-                        
-                        // 重写window.open方法
-                        const originalOpen = window.open;
-                        window.open = function(url, target, features) {
-                            if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
-                                url = new URL(url, window.location.href).href;
-                            }
-                            
-                            if (url && url.startsWith('http:')) {
-                                url = url.replace('http:', 'https:');
-                            }
-                            
-                            if (url) {
-                                if (isWeChat && target === '_blank') {
-                                    // 微信中阻止新窗口打开，在当前页面跳转
-                                    window.location.href = url;
-                                    return window;
-                                } else {
-                                    window.location.href = url;
-                                    return window;
-                                }
-                            }
-                            
-                            return originalOpen.apply(this, arguments);
-                        };
-                        
-                        // 修复表单提交
-                        document.addEventListener('submit', function(e) {
-                            const form = e.target;
-                            if (!form.target) {
-                                form.target = '_self';
-                            }
-                            
-                            const action = form.getAttribute('action');
-                            if (action && action.startsWith('http:')) {
-                                form.setAttribute('action', action.replace('http:', 'https:'));
-                            }
-                        });
-                        
-                        // 修复location.href赋值
-                        const originalDescriptor = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href');
-                        if (originalDescriptor && originalDescriptor.set) {
-                            const originalSet = originalDescriptor.set;
-                            Object.defineProperty(window.location, 'href', {
-                                set: function(url) {
-                                    if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
-                                        url = new URL(url, window.location.href).href;
-                                    }
-                                    
-                                    if (url && url.startsWith('http:')) {
-                                        url = url.replace('http:', 'https:');
-                                    }
-                                    
-                                    return originalSet.call(this, url);
-                                },
-                                get: originalDescriptor.get,
-                                configurable: true
-                            });
+                    // 重写window.open方法
+                    const originalOpen = window.open;
+                    window.open = function(url, target, features) {
+                        // 如果是相对URL，转换为绝对URL
+                        if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
+                            url = new URL(url, window.location.href).href;
                         }
                         
-                        // 通知父页面已加载
+                        // 如果是HTTP URL，尝试转换为HTTPS
+                        if (url && url.startsWith('http:')) {
+                            url = url.replace('http:', 'https:');
+                        }
+                        
+                        // 在当前iframe中打开链接
+                        if (url) {
+                            window.location.href = url;
+                            return window;
+                        }
+                        
+                        // 否则使用原始方法
+                        return originalOpen.apply(this, arguments);
+                    };
+                    
+                    // 修复表单提交
+                    document.addEventListener('submit', function(e) {
+                        const form = e.target;
+                        if (!form.target) {
+                            form.target = '_self';
+                        }
+                        
+                        // 如果表单action是HTTP，尝试转换为HTTPS
+                        const action = form.getAttribute('action');
+                        if (action && action.startsWith('http:')) {
+                            form.setAttribute('action', action.replace('http:', 'https:'));
+                        }
+                    });
+                    
+                    // 修复location.href赋值
+                    const originalDescriptor = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href');
+                    if (originalDescriptor && originalDescriptor.set) {
+                        const originalSet = originalDescriptor.set;
+                        Object.defineProperty(window.location, 'href', {
+                            set: function(url) {
+                                // 如果是相对URL，转换为绝对URL
+                                if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
+                                    url = new URL(url, window.location.href).href;
+                                }
+                                
+                                // 如果是HTTP URL，尝试转换为HTTPS
+                                if (url && url.startsWith('http:')) {
+                                    url = url.replace('http:', 'https:');
+                                }
+                                
+                                return originalSet.call(this, url);
+                            },
+                            get: originalDescriptor.get,
+                            configurable: true
+                        });
+                    }
+                    
+                    // 通知父页面已加载
+                    try {
+                        window.parent.postMessage({ type: 'FRAME_LOADED' }, '*');
+                    } catch (e) {}
+                    
+                    // 修复所有链接
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const links = document.querySelectorAll('a[href^="http:"]');
+                        links.forEach(link => {
+                            link.href = link.href.replace('http:', 'https:');
+                        });
+                    });
+                    
+                    // 处理来自父页面的存储同步
+                    window.addEventListener('message', function(event) {
                         try {
-                            window.parent.postMessage({ type: 'FRAME_LOADED' }, '*');
-                        } catch (e) {}
-                        
-                        // 修复所有链接
-                        const fixLinks = () => {
-                            const links = document.querySelectorAll('a[href^="http:"]');
-                            links.forEach(link => {
-                                link.href = link.href.replace('http:', 'https:');
-                            });
-                        };
-                        
-                        // 页面加载完成后修复链接
-                        if (document.readyState === 'loading') {
-                            document.addEventListener('DOMContentLoaded', fixLinks);
-                        } else {
-                            fixLinks();
-                        }
-                        
-                        // 监听动态添加的链接
-                        const observer = new MutationObserver(fixLinks);
-                        observer.observe(document.body, { childList: true, subtree: true });
-                        
-                        // 处理来自父页面的存储同步
-                        window.addEventListener('message', function(event) {
-                            try {
-                                const data = event.data;
-                                
-                                if (data && data.type === 'SYNC_STORAGE') {
-                                    // 同步localStorage
-                                    const localStorageData = data.localStorage || {};
-                                    for (const key in localStorageData) {
-                                        try {
-                                            localStorage.setItem(key, localStorageData[key]);
-                                        } catch (e) {}
-                                    }
-                                    
-                                    // 同步sessionStorage
-                                    const sessionStorageData = data.sessionStorage || {};
-                                    for (const key in sessionStorageData) {
-                                        try {
-                                            sessionStorage.setItem(key, sessionStorageData[key]);
-                                        } catch (e) {}
-                                    }
-                                    
-                                    // 同步cookies
-                                    const cookies = data.cookies || '';
-                                    const cookieList = cookies.split(';');
-                                    cookieList.forEach(cookie => {
-                                        try {
-                                            document.cookie = cookie.trim();
-                                        } catch (e) {}
-                                    });
-                                }
-                            } catch (e) {}
-                        });
-                        
-                        // 将存储变化同步回父页面
-                        const syncStorageToParent = () => {
-                            try {
-                                const localStorageData = {};
-                                for (let i = 0; i < localStorage.length; i++) {
-                                    const key = localStorage.key(i);
-                                    localStorageData[key] = localStorage.getItem(key);
-                                }
-                                
-                                const sessionStorageData = {};
-                                for (let i = 0; i < sessionStorage.length; i++) {
-                                    const key = sessionStorage.key(i);
-                                    sessionStorageData[key] = sessionStorage.getItem(key);
-                                }
-                                
-                                window.parent.postMessage({
-                                    type: 'STORAGE_SYNC_BACK',
-                                    localStorage: localStorageData,
-                                    sessionStorage: sessionStorageData,
-                                    cookies: document.cookie
-                                }, '*');
-                            } catch (e) {}
-                        };
-                        
-                        // 监听存储变化
-                        window.addEventListener('storage', syncStorageToParent);
-                        
-                        // 定期同步存储
-                        setInterval(syncStorageToParent, 10000);
-                        
-                        // 微信环境特殊处理
-                        if (isWeChat) {
-                            // 禁用长按菜单
-                            document.addEventListener('contextmenu', function(e) {
-                                e.preventDefault();
-                            });
+                            const data = event.data;
                             
-                            // 禁用选择文本
-                            document.addEventListener('selectstart', function(e) {
-                                e.preventDefault();
-                            });
+                            // 同步localStorage
+                            if (data && data.type === 'SYNC_LOCAL_STORAGE') {
+                                const storage = data.storage || {};
+                                for (const key in storage) {
+                                    try {
+                                        localStorage.setItem(key, storage[key]);
+                                    } catch (e) {
+                                        console.error('Error setting localStorage item:', e);
+                                    }
+                                }
+                            }
                             
-                            // 处理微信的返回按钮
-                            if (typeof WeixinJSBridge !== 'undefined') {
-                                WeixinJSBridge.on('menu:general:share', function() {
-                                    return false;
+                            // 同步sessionStorage
+                            if (data && data.type === 'SYNC_SESSION_STORAGE') {
+                                const storage = data.storage || {};
+                                for (const key in storage) {
+                                    try {
+                                        sessionStorage.setItem(key, storage[key]);
+                                    } catch (e) {
+                                        console.error('Error setting sessionStorage item:', e);
+                                    }
+                                }
+                            }
+                            
+                            // 同步cookies
+                            if (data && data.type === 'SYNC_COOKIES') {
+                                const cookies = data.cookies || '';
+                                const cookieList = cookies.split(';');
+                                
+                                cookieList.forEach(cookie => {
+                                    try {
+                                        document.cookie = cookie.trim();
+                                    } catch (e) {
+                                        console.error('Error setting cookie:', e);
+                                    }
                                 });
                             }
+                        } catch (e) {
+                            console.error('Error processing message:', e);
                         }
-                    })();
+                    });
+                    
+                    // 将存储变化同步回父页面
+                    const syncStorageToParent = () => {
+                        try {
+                            // 同步localStorage
+                            const localStorageData = {};
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const key = localStorage.key(i);
+                                localStorageData[key] = localStorage.getItem(key);
+                            }
+                            
+                            // 同步sessionStorage
+                            const sessionStorageData = {};
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                                const key = sessionStorage.key(i);
+                                sessionStorageData[key] = sessionStorage.getItem(key);
+                            }
+                            
+                            // 发送到父页面
+                            window.parent.postMessage({
+                                type: 'STORAGE_SYNC_BACK',
+                                localStorage: localStorageData,
+                                sessionStorage: sessionStorageData,
+                                cookies: document.cookie
+                            }, '*');
+                        } catch (e) {
+                            console.error('Error syncing storage to parent:', e);
+                        }
+                    };
+                    
+                    // 监听存储变化
+                    window.addEventListener('storage', syncStorageToParent);
+                    
+                    // 定期同步存储
+                    setInterval(syncStorageToParent, 5000);
                 `;
                 
+                // 添加到iframe文档
                 frameDoc.head.appendChild(script);
                 
             } catch (e) {
@@ -665,113 +484,71 @@
         
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 微信环境优化
-            if (isWeChat()) {
-                // 禁用微信的下拉刷新
-                document.addEventListener('touchstart', function(e) {
-                    if (e.touches.length === 1 && e.touches[0].clientY <= 10) {
-                        e.preventDefault();
-                    }
-                });
-                
-                // 禁用微信的橡皮筋效果
-                document.addEventListener('touchmove', function(e) {
-                    e.preventDefault();
-                }, { passive: false });
-                
-                // 设置微信标题
-                document.title = '文档预览';
-                
-                // 微信分享配置
-                if (typeof WeixinJSBridge !== 'undefined') {
-                    WeixinJSBridge.on('menu:share:timeline', function() {
-                        return {
-                            title: '文档预览',
-                            desc: '文档预览工具',
-                            link: window.location.href,
-                            imgUrl: ''
-                        };
-                    });
-                }
-            }
-            
             loadContent();
             
-            // 监听来自iframe的消息
+            // 监听来自iframe的存储同步
             window.addEventListener('message', (event) => {
                 try {
                     const data = event.data;
                     
                     if (data && data.type === 'FRAME_LOADED') {
+                        // iframe已加载完成
                         document.getElementById('loading').style.display = 'none';
                     }
                     
                     if (data && data.type === 'MIXED_CONTENT_ERROR') {
+                        // 检测到混合内容错误
                         showFallbackUI();
                     }
                     
                     // 处理从iframe同步回来的存储
                     if (data && data.type === 'STORAGE_SYNC_BACK') {
+                        // 同步localStorage
                         const localStorageData = data.localStorage || {};
                         for (const key in localStorageData) {
                             try {
                                 localStorage.setItem(key, localStorageData[key]);
-                            } catch (e) {}
+                            } catch (e) {
+                                console.error('Error setting localStorage item:', e);
+                            }
                         }
                         
+                        // 同步sessionStorage
                         const sessionStorageData = data.sessionStorage || {};
                         for (const key in sessionStorageData) {
                             try {
                                 sessionStorage.setItem(key, sessionStorageData[key]);
-                            } catch (e) {}
+                            } catch (e) {
+                                console.error('Error setting sessionStorage item:', e);
+                            }
                         }
                         
+                        // 同步cookies
                         const cookies = data.cookies || '';
                         const cookieList = cookies.split(';');
+                        
                         cookieList.forEach(cookie => {
                             try {
                                 document.cookie = cookie.trim();
-                            } catch (e) {}
+                            } catch (e) {
+                                console.error('Error setting cookie:', e);
+                            }
                         });
                     }
-                } catch (e) {}
-            });
-            
-            // 键盘快捷键（主要用于调试）
-            document.addEventListener('keydown', (e) => {
-                if (e.ctrlKey && e.key === 'o') {
-                    e.preventDefault();
-                    handleErrorButton();
+                } catch (e) {
+                    console.error('Error processing message:', e);
                 }
             });
             
-            // 处理页面可见性变化
-            document.addEventListener('visibilitychange', function() {
-                if (!document.hidden && isWeChat()) {
-                    // 微信中页面重新可见时的处理
-                    const frame = document.getElementById('content-frame');
-                    if (frame && frame.src) {
-                        // 检查iframe是否还在正常工作
-                        setTimeout(() => {
-                            try {
-                                const iframeDoc = frame.contentDocument;
-                                if (!iframeDoc) {
-                                    // iframe可能被重置，重新加载
-                                    loadContent();
-                                }
-                            } catch (e) {
-                                // 跨域情况下忽略错误
-                            }
-                        }, 1000);
-                    }
+            // 处理键盘快捷键 - 仅保留在浏览器中打开的快捷键
+            document.addEventListener('keydown', (e) => {
+                // Ctrl+O 在浏览器中打开
+                if (e.ctrlKey && e.key === 'o') {
+                    e.preventDefault();
+                    openInBrowser();
                 }
             });
         });
-        
-        // 防止页面被嵌套在其他iframe中
-        if (window.top !== window.self) {
-            window.top.location = window.self.location;
-        }
     </script>
 </body>
 </html>
