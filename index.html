@@ -251,7 +251,8 @@
             // 完全移除所有限制
             frame.removeAttribute('sandbox');
             
-            // 设置允许的功能
+            // 设置允许的功能，添加 allow-top-navigation-by-user-activation 以允许iframe改变顶层页面地址
+            frame.setAttribute('sandbox', 'allow-top-navigation-by-user-activation allow-fullscreen allow-camera allow-microphone allow-geolocation allow-payment allow-autoplay allow-encrypted-media');
             frame.setAttribute('allowfullscreen', 'true');
             frame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media; fullscreen');
             
