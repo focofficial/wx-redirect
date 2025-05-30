@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档预览</title>
     <meta name="description" content="文档预览工具">
-    <!-- 尝试允许混合内容 - 注意：这不是所有浏览器都支持 -->
+    <!-- 尝试允许混合内容 -->
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <style>
         * {
@@ -28,75 +28,11 @@
             height: 100vh;
         }
         
-        .top-bar {
-            height: 30px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 15px;
-            font-size: 12px;
-            color: #6c757d;
-            transition: opacity 0.3s;
-        }
-        
-        .top-bar.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
         .content-frame {
             width: 100%;
-            height: calc(100vh - 30px);
+            height: 100vh;
             border: none;
             display: block;
-        }
-        
-        .content-frame.fullscreen {
-            height: 100vh;
-        }
-        
-        .open-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-        
-        .controls {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            z-index: 9999;
-            background: rgba(0,0,0,0.7);
-            border-radius: 20px;
-            padding: 5px;
-            display: flex;
-            gap: 5px;
-            opacity: 0.3;
-            transition: opacity 0.3s;
-        }
-        
-        .controls:hover {
-            opacity: 1;
-        }
-        
-        .control-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            border: none;
-            background: #333;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .loading {
@@ -110,6 +46,7 @@
             padding: 10px 20px;
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 9999;
         }
         
         .error-container {
@@ -125,6 +62,7 @@
             align-items: center;
             padding: 20px;
             text-align: center;
+            z-index: 9998;
         }
         
         .error-icon {
@@ -149,29 +87,14 @@
             cursor: pointer;
             margin-top: 20px;
         }
-        
-        #proxy-frame {
-            display: none;
-        }
     </style>
 </head>
 <body>
-    <!-- 控制按钮 -->
-    <div class="controls">
-        <button class="control-btn" onclick="toggleTopBar()" title="显示/隐藏顶栏">T</button>
-        <button class="control-btn" onclick="openInBrowser()" title="在浏览器中打开">B</button>
-        <button class="control-btn" onclick="refreshPage()" title="刷新页面">R</button>
-    </div>
-    
     <!-- 加载提示 -->
     <div id="loading" class="loading">正在加载...</div>
     
     <!-- 主容器 -->
     <div class="container">
-        <div id="top-bar" class="top-bar">
-            <span>文档预览</span>
-            <button class="open-btn" onclick="openInBrowser()">浏览器打开</button>
-        </div>
         <iframe id="content-frame" name="content-frame" class="content-frame"></iframe>
     </div>
     
@@ -181,9 +104,6 @@
         <h2 class="error-title">正在载入页面</h2>
         <button class="error-button" onclick="openInBrowser()">立即进入</button>
     </div>
-    
-    <!-- 用于处理跳转的隐藏iframe -->
-    <iframe id="proxy-frame" name="proxy-frame"></iframe>
 
     <script>
         // 获取目标URL
@@ -228,20 +148,6 @@
         const isWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
         const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // 切换顶栏显示
-        const toggleTopBar = () => {
-            const topBar = document.getElementById('top-bar');
-            const contentFrame = document.getElementById('content-frame');
-            
-            if (topBar.classList.contains('hidden')) {
-                topBar.classList.remove('hidden');
-                contentFrame.classList.remove('fullscreen');
-            } else {
-                topBar.classList.add('hidden');
-                contentFrame.classList.add('fullscreen');
-            }
-        };
-        
         // 在浏览器中打开
         const openInBrowser = () => {
             const targetUrl = getTargetUrl();
@@ -254,63 +160,79 @@
             }
         };
         
-        // 刷新页面
-        const refreshPage = () => {
-            loadContent();
-        };
-        
-        // 处理iframe内部链接点击
-        const setupLinkInterception = () => {
-            try {
-                const frame = document.getElementById('content-frame');
-                const frameDoc = frame.contentDocument || frame.contentWindow.document;
-                
-                if (!frameDoc) return; // 跨域限制
-                
-                // 拦截所有链接点击
-                frameDoc.addEventListener('click', (e) => {
-                    const link = e.target.closest('a');
-                    if (!link) return;
-                    
-                    const href = link.getAttribute('href');
-                    if (!href || href.startsWith('#')) return;
-                    
-                    // 阻止默认行为
-                    e.preventDefault();
-                    
-                    // 在当前iframe中打开链接
-                    frame.src = new URL(href, frame.src).href;
-                });
-            } catch (e) {
-                console.log('Cannot access iframe content due to cross-origin restrictions');
-            }
-        };
-        
-        // 处理iframe内部表单提交
-        const setupFormInterception = () => {
-            try {
-                const frame = document.getElementById('content-frame');
-                const frameDoc = frame.contentDocument || frame.contentWindow.document;
-                
-                if (!frameDoc) return; // 跨域限制
-                
-                // 拦截所有表单提交
-                frameDoc.addEventListener('submit', (e) => {
-                    const form = e.target;
-                    
-                    // 修改表单target为当前iframe
-                    form.target = 'content-frame';
-                });
-            } catch (e) {
-                console.log('Cannot access iframe content due to cross-origin restrictions');
-            }
-        };
-        
         // 显示备用界面
         const showFallbackUI = () => {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error-container').style.display = 'flex';
             document.querySelector('.container').style.display = 'none';
+        };
+        
+        // 同步缓存到目标网站
+        const syncStorageToTarget = (frame) => {
+            try {
+                const frameWindow = frame.contentWindow;
+                if (!frameWindow) return;
+                
+                // 同步localStorage
+                const syncLocalStorage = () => {
+                    try {
+                        const storage = {};
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            storage[key] = localStorage.getItem(key);
+                        }
+                        
+                        frameWindow.postMessage({
+                            type: 'SYNC_LOCAL_STORAGE',
+                            storage: storage
+                        }, '*');
+                    } catch (e) {
+                        console.error('Error syncing localStorage:', e);
+                    }
+                };
+                
+                // 同步sessionStorage
+                const syncSessionStorage = () => {
+                    try {
+                        const storage = {};
+                        for (let i = 0; i < sessionStorage.length; i++) {
+                            const key = sessionStorage.key(i);
+                            storage[key] = sessionStorage.getItem(key);
+                        }
+                        
+                        frameWindow.postMessage({
+                            type: 'SYNC_SESSION_STORAGE',
+                            storage: storage
+                        }, '*');
+                    } catch (e) {
+                        console.error('Error syncing sessionStorage:', e);
+                    }
+                };
+                
+                // 同步cookies
+                const syncCookies = () => {
+                    try {
+                        const cookies = document.cookie;
+                        
+                        frameWindow.postMessage({
+                            type: 'SYNC_COOKIES',
+                            cookies: cookies
+                        }, '*');
+                    } catch (e) {
+                        console.error('Error syncing cookies:', e);
+                    }
+                };
+                
+                // 执行同步
+                setTimeout(() => {
+                    syncLocalStorage();
+                    syncSessionStorage();
+                    syncCookies();
+                }, 2000);
+                
+            } catch (e) {
+                console.error('Error accessing frame window:', e);
+            }
         };
         
         // 加载内容
@@ -343,14 +265,11 @@
             frame.onload = () => {
                 document.getElementById('loading').style.display = 'none';
                 
-                // 尝试设置链接和表单拦截
-                setTimeout(() => {
-                    setupLinkInterception();
-                    setupFormInterception();
-                }, 1000);
-                
                 // 尝试注入辅助脚本
                 injectHelperScript(frame);
+                
+                // 同步缓存
+                syncStorageToTarget(frame);
             };
             
             // 处理加载错误
@@ -471,6 +390,88 @@
                             link.href = link.href.replace('http:', 'https:');
                         });
                     });
+                    
+                    // 处理来自父页面的存储同步
+                    window.addEventListener('message', function(event) {
+                        try {
+                            const data = event.data;
+                            
+                            // 同步localStorage
+                            if (data && data.type === 'SYNC_LOCAL_STORAGE') {
+                                const storage = data.storage || {};
+                                for (const key in storage) {
+                                    try {
+                                        localStorage.setItem(key, storage[key]);
+                                    } catch (e) {
+                                        console.error('Error setting localStorage item:', e);
+                                    }
+                                }
+                            }
+                            
+                            // 同步sessionStorage
+                            if (data && data.type === 'SYNC_SESSION_STORAGE') {
+                                const storage = data.storage || {};
+                                for (const key in storage) {
+                                    try {
+                                        sessionStorage.setItem(key, storage[key]);
+                                    } catch (e) {
+                                        console.error('Error setting sessionStorage item:', e);
+                                    }
+                                }
+                            }
+                            
+                            // 同步cookies
+                            if (data && data.type === 'SYNC_COOKIES') {
+                                const cookies = data.cookies || '';
+                                const cookieList = cookies.split(';');
+                                
+                                cookieList.forEach(cookie => {
+                                    try {
+                                        document.cookie = cookie.trim();
+                                    } catch (e) {
+                                        console.error('Error setting cookie:', e);
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.error('Error processing message:', e);
+                        }
+                    });
+                    
+                    // 将存储变化同步回父页面
+                    const syncStorageToParent = () => {
+                        try {
+                            // 同步localStorage
+                            const localStorageData = {};
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const key = localStorage.key(i);
+                                localStorageData[key] = localStorage.getItem(key);
+                            }
+                            
+                            // 同步sessionStorage
+                            const sessionStorageData = {};
+                            for (let i = 0; i < sessionStorage.length; i++) {
+                                const key = sessionStorage.key(i);
+                                sessionStorageData[key] = sessionStorage.getItem(key);
+                            }
+                            
+                            // 发送到父页面
+                            window.parent.postMessage({
+                                type: 'STORAGE_SYNC_BACK',
+                                localStorage: localStorageData,
+                                sessionStorage: sessionStorageData,
+                                cookies: document.cookie
+                            }, '*');
+                        } catch (e) {
+                            console.error('Error syncing storage to parent:', e);
+                        }
+                    };
+                    
+                    // 监听存储变化
+                    window.addEventListener('storage', syncStorageToParent);
+                    
+                    // 定期同步存储
+                    setInterval(syncStorageToParent, 5000);
                 `;
                 
                 // 添加到iframe文档
@@ -478,107 +479,75 @@
                 
             } catch (e) {
                 console.log('Cannot inject script due to cross-origin restrictions');
-                
-                // 跨域情况下，使用替代方案
-                useFallbackMethod(frame);
-            }
-        };
-        
-        // 跨域情况下的替代方案
-        const useFallbackMethod = (frame) => {
-            // 监听消息
-            window.addEventListener('message', (event) => {
-                try {
-                    const data = event.data;
-                    
-                    // 处理iframe内部的导航请求
-                    if (data && data.type === 'NAVIGATE') {
-                        let url = data.url;
-                        // 如果是HTTP URL，尝试转换为HTTPS
-                        if (url && url.startsWith('http:')) {
-                            url = url.replace('http:', 'https:');
-                        }
-                        frame.src = url;
-                    }
-                } catch (e) {
-                    console.error('Error processing message:', e);
-                }
-            });
-        };
-        
-        // 自动隐藏顶栏（移动设备）
-        const autoHideTopBar = () => {
-            if (isMobile()) {
-                setTimeout(() => {
-                    toggleTopBar();
-                }, 2000);
             }
         };
         
         // 页面初始化
         document.addEventListener('DOMContentLoaded', () => {
             loadContent();
-            autoHideTopBar();
             
-            // 监听键盘快捷键
-            document.addEventListener('keydown', (e) => {
-                // Ctrl+T 切换顶栏
-                if (e.ctrlKey && e.key === 't') {
-                    e.preventDefault();
-                    toggleTopBar();
+            // 监听来自iframe的存储同步
+            window.addEventListener('message', (event) => {
+                try {
+                    const data = event.data;
+                    
+                    if (data && data.type === 'FRAME_LOADED') {
+                        // iframe已加载完成
+                        document.getElementById('loading').style.display = 'none';
+                    }
+                    
+                    if (data && data.type === 'MIXED_CONTENT_ERROR') {
+                        // 检测到混合内容错误
+                        showFallbackUI();
+                    }
+                    
+                    // 处理从iframe同步回来的存储
+                    if (data && data.type === 'STORAGE_SYNC_BACK') {
+                        // 同步localStorage
+                        const localStorageData = data.localStorage || {};
+                        for (const key in localStorageData) {
+                            try {
+                                localStorage.setItem(key, localStorageData[key]);
+                            } catch (e) {
+                                console.error('Error setting localStorage item:', e);
+                            }
+                        }
+                        
+                        // 同步sessionStorage
+                        const sessionStorageData = data.sessionStorage || {};
+                        for (const key in sessionStorageData) {
+                            try {
+                                sessionStorage.setItem(key, sessionStorageData[key]);
+                            } catch (e) {
+                                console.error('Error setting sessionStorage item:', e);
+                            }
+                        }
+                        
+                        // 同步cookies
+                        const cookies = data.cookies || '';
+                        const cookieList = cookies.split(';');
+                        
+                        cookieList.forEach(cookie => {
+                            try {
+                                document.cookie = cookie.trim();
+                            } catch (e) {
+                                console.error('Error setting cookie:', e);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Error processing message:', e);
                 }
-                
+            });
+            
+            // 处理键盘快捷键 - 仅保留在浏览器中打开的快捷键
+            document.addEventListener('keydown', (e) => {
                 // Ctrl+O 在浏览器中打开
                 if (e.ctrlKey && e.key === 'o') {
                     e.preventDefault();
                     openInBrowser();
                 }
-                
-                // Ctrl+R 刷新页面
-                if (e.ctrlKey && e.key === 'r') {
-                    e.preventDefault();
-                    refreshPage();
-                }
             });
-        });
-    </script>
-    
-    <!-- 处理跨域通信的辅助脚本 -->
-    <script>
-        // 创建一个全局函数，用于处理iframe内部的导航
-        window.handleFrameNavigation = (url) => {
-            const frame = document.getElementById('content-frame');
-            if (frame) {
-                // 如果是HTTP URL，尝试转换为HTTPS
-                if (url && url.startsWith('http:')) {
-                    url = url.replace('http:', 'https:');
-                }
-                frame.src = url;
-            }
-        };
-        
-        // 监听来自iframe的消息
-        window.addEventListener('message', (event) => {
-            try {
-                const data = event.data;
-                
-                if (data && data.type === 'FRAME_LOADED') {
-                    // iframe已加载完成
-                    document.getElementById('loading').style.display = 'none';
-                }
-                
-                if (data && data.type === 'NAVIGATE') {
-                    // iframe请求导航到新URL
-                    handleFrameNavigation(data.url);
-                }
-                
-                if (data && data.type === 'MIXED_CONTENT_ERROR') {
-                    // 检测到混合内容错误
-                    showFallbackUI();
-                }
-            } catch (e) {
-                console.error('Error processing message:', e);
-            }
         });
     </script>
 </body>
