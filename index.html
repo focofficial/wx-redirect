@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文档预览</title>
     <meta name="description" content="文档预览工具">
-    <!-- 尝试允许混合内容 -->
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <style>
         * {
             margin: 0;
@@ -20,15 +18,10 @@
             overflow: hidden;
         }
         
-        .container {
+        #content-frame {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100vh;
-        }
-        
-        .content-frame {
             width: 100%;
             height: 100vh;
             border: none;
@@ -46,7 +39,6 @@
             padding: 10px 20px;
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 9999;
         }
         
         .error-container {
@@ -62,7 +54,6 @@
             align-items: center;
             padding: 20px;
             text-align: center;
-            z-index: 9998;
         }
         
         .error-icon {
@@ -76,33 +67,19 @@
             color: #333;
             margin-bottom: 15px;
         }
-        
-        .error-button {
-            background: #5cb85c;
-            color: white;
-            border: none;
-            padding: 10px 30px;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
     <!-- 加载提示 -->
     <div id="loading" class="loading">正在加载...</div>
     
-    <!-- 主容器 -->
-    <div class="container">
-        <iframe id="content-frame" name="content-frame" class="content-frame"></iframe>
-    </div>
+    <!-- 主iframe -->
+    <iframe id="content-frame" name="content-frame"></iframe>
     
-    <!-- 混合内容错误备用显示 -->
+    <!-- 错误备用显示 -->
     <div id="error-container" class="error-container" style="display: none;">
         <div class="error-icon">✓</div>
-        <h2 class="error-title">正在载入页面</h2>
-        <button class="error-button" onclick="openInBrowser()">立即进入</button>
+        <h2 class="error-title">页面加载失败，请稍后再试</h2>
     </div>
 
     <script>
@@ -110,30 +87,31 @@
         const getTargetUrl = () => {
             const urlParams = new URLSearchParams(window.location.search);
             
-            // 支持新的参数格式: ?c=BASE64_ENCODED_URL
-            const encodedUrl = urlParams.get('c');
-            if (encodedUrl) {
+            // 支持多种参数格式
+            const encodedUrl = urlParams.get('c') || urlParams.get('url') || urlParams.get('u') || urlParams.get('link');
+            
+            if (!encodedUrl) return 'https://example.com';
+            
+            // 尝试Base64解码
+            if (encodedUrl.match(/^[A-Za-z0-9+/]+={0,2}$/) && encodedUrl.length % 4 === 0) {
                 try {
                     return atob(encodedUrl);
                 } catch (e) {
                     console.error('Base64 decode failed:', e);
-                    return 'https://example.com';
                 }
             }
             
-            // 兼容旧的参数格式
-            const target = urlParams.get('url') || urlParams.get('u') || urlParams.get('link');
-            
             // 支持旧的base64编码格式
-            if (target && target.startsWith('base64:')) {
+            if (encodedUrl.startsWith('base64:')) {
                 try {
-                    return atob(target.replace('base64:', ''));
+                    return atob(encodedUrl.replace('base64:', ''));
                 } catch (e) {
                     console.error('Base64 decode failed:', e);
                 }
             }
             
-            return target ? decodeURIComponent(target) : 'https://example.com';
+            // 普通URL解码
+            return decodeURIComponent(encodedUrl);
         };
         
         // 尝试将HTTP URL转换为HTTPS
@@ -146,93 +124,11 @@
         
         // 检测环境
         const isWeChat = () => /MicroMessenger/i.test(navigator.userAgent);
-        const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        // 在浏览器中打开
-        const openInBrowser = () => {
-            const targetUrl = getTargetUrl();
-            
-            if (isWeChat()) {
-                // 微信环境提示
-                alert('请点击右上角菜单，选择"在浏览器中打开"');
-            } else {
-                window.open(targetUrl, '_blank');
-            }
-        };
         
         // 显示备用界面
         const showFallbackUI = () => {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error-container').style.display = 'flex';
-            document.querySelector('.container').style.display = 'none';
-        };
-        
-        // 同步缓存到目标网站
-        const syncStorageToTarget = (frame) => {
-            try {
-                const frameWindow = frame.contentWindow;
-                if (!frameWindow) return;
-                
-                // 同步localStorage
-                const syncLocalStorage = () => {
-                    try {
-                        const storage = {};
-                        for (let i = 0; i < localStorage.length; i++) {
-                            const key = localStorage.key(i);
-                            storage[key] = localStorage.getItem(key);
-                        }
-                        
-                        frameWindow.postMessage({
-                            type: 'SYNC_LOCAL_STORAGE',
-                            storage: storage
-                        }, '*');
-                    } catch (e) {
-                        console.error('Error syncing localStorage:', e);
-                    }
-                };
-                
-                // 同步sessionStorage
-                const syncSessionStorage = () => {
-                    try {
-                        const storage = {};
-                        for (let i = 0; i < sessionStorage.length; i++) {
-                            const key = sessionStorage.key(i);
-                            storage[key] = sessionStorage.getItem(key);
-                        }
-                        
-                        frameWindow.postMessage({
-                            type: 'SYNC_SESSION_STORAGE',
-                            storage: storage
-                        }, '*');
-                    } catch (e) {
-                        console.error('Error syncing sessionStorage:', e);
-                    }
-                };
-                
-                // 同步cookies
-                const syncCookies = () => {
-                    try {
-                        const cookies = document.cookie;
-                        
-                        frameWindow.postMessage({
-                            type: 'SYNC_COOKIES',
-                            cookies: cookies
-                        }, '*');
-                    } catch (e) {
-                        console.error('Error syncing cookies:', e);
-                    }
-                };
-                
-                // 执行同步
-                setTimeout(() => {
-                    syncLocalStorage();
-                    syncSessionStorage();
-                    syncCookies();
-                }, 2000);
-                
-            } catch (e) {
-                console.error('Error accessing frame window:', e);
-            }
         };
         
         // 加载内容
@@ -243,7 +139,6 @@
             // 显示加载提示
             document.getElementById('loading').style.display = 'block';
             document.getElementById('error-container').style.display = 'none';
-            document.querySelector('.container').style.display = 'block';
             
             // 尝试将HTTP转换为HTTPS
             const httpsUrl = tryHttpsUrl(targetUrl);
@@ -251,25 +146,19 @@
             // 完全移除所有限制
             frame.removeAttribute('sandbox');
             
-            // 设置允许的功能，添加 allow-top-navigation-by-user-activation 以允许iframe改变顶层页面地址
-            frame.setAttribute('sandbox', 'allow-top-navigation-by-user-activation allow-scripts');
+            // 设置允许的功能
             frame.setAttribute('allowfullscreen', 'true');
+            frame.setAttribute('allow', 'camera; microphone; geolocation; payment; autoplay; encrypted-media; fullscreen');
             
-            // 允许iframe内容控制父页面
-            frame.setAttribute('allowtransparency', 'true');
-            
-            // 加载目标URL
-            frame.src = httpsUrl;
+            // 确保iframe使用与目标网址相同的缓存策略
+            frame.src = httpsUrl + (httpsUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
             
             // 处理加载完成
             frame.onload = () => {
                 document.getElementById('loading').style.display = 'none';
                 
-                // 尝试注入辅助脚本
-                injectHelperScript(frame);
-                
-                // 同步缓存
-                syncStorageToTarget(frame);
+                // 同步目标网址的缓存控制
+                syncCacheHeaders(frame);
             };
             
             // 处理加载错误
@@ -289,189 +178,48 @@
                 }
             }, true);
             
-            // 设置超时，如果加载时间过长则显示备用界面
+            // 设置超时
             setTimeout(() => {
-                // 避免跨域访问 iframe.document，改为判断 loading 状态
-                const loadingVisible = document.getElementById('loading').style.display !== 'none';
-                if (loadingVisible) {
-                    showFallbackUI();
+                try {
+                    // 检查iframe是否成功加载
+                    const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+                    if (!iframeDoc || !iframeDoc.body) {
+                        showFallbackUI();
+                    }
+                } catch (e) {
+                    // 如果出现跨域错误，可能是混合内容问题
+                    if (targetUrl.startsWith('http:')) {
+                        showFallbackUI();
+                    }
                 }
-            }, 15000);
+            }, 5000);
         };
         
-        // 注入辅助脚本到iframe
-        const injectHelperScript = (frame) => {
+        // 同步目标网址的缓存控制
+        const syncCacheHeaders = (frame) => {
             try {
                 const frameWindow = frame.contentWindow;
-                const frameDoc = frameWindow.document;
                 
-                // 如果无法访问iframe内容，则退出
-                if (!frameDoc) return;
-                
-                // 创建辅助脚本
-                const script = frameDoc.createElement('script');
-                script.textContent = `
-                    // 重写window.open方法
-                    const originalOpen = window.open;
-                    window.open = function(url, target, features) {
-                        // 如果是相对URL，转换为绝对URL
-                        if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
-                            url = new URL(url, window.location.href).href;
-                        }
-                        
-                        // 如果是HTTP URL，尝试转换为HTTPS
-                        if (url && url.startsWith('http:')) {
-                            url = url.replace('http:', 'https:');
-                        }
-                        
-                        // 在当前iframe中打开链接
-                        if (url) {
-                            window.location.href = url;
-                            return window;
-                        }
-                        
-                        // 否则使用原始方法
-                        return originalOpen.apply(this, arguments);
-                    };
-                    
-                    // 修复表单提交
-                    document.addEventListener('submit', function(e) {
-                        const form = e.target;
-                        if (!form.target) {
-                            form.target = '_self';
-                        }
-                        
-                        // 如果表单action是HTTP，尝试转换为HTTPS
-                        const action = form.getAttribute('action');
-                        if (action && action.startsWith('http:')) {
-                            form.setAttribute('action', action.replace('http:', 'https:'));
-                        }
-                    });
-                    
-                    // 修复location.href赋值
-                    const originalDescriptor = Object.getOwnPropertyDescriptor(window.Location.prototype, 'href');
-                    if (originalDescriptor && originalDescriptor.set) {
-                        const originalSet = originalDescriptor.set;
-                        Object.defineProperty(window.location, 'href', {
-                            set: function(url) {
-                                // 如果是相对URL，转换为绝对URL
-                                if (url && !url.match(/^(https?:|mailto:|tel:|javascript:|data:|#)/i)) {
-                                    url = new URL(url, window.location.href).href;
-                                }
-                                
-                                // 如果是HTTP URL，尝试转换为HTTPS
-                                if (url && url.startsWith('http:')) {
-                                    url = url.replace('http:', 'https:');
-                                }
-                                
-                                return originalSet.call(this, url);
-                            },
-                            get: originalDescriptor.get,
-                            configurable: true
-                        });
+                // 重写fetch方法以确保缓存行为一致
+                const originalFetch = frameWindow.fetch;
+                frameWindow.fetch = function(input, init) {
+                    // 确保所有请求都包含时间戳参数以避免缓存
+                    if (typeof input === 'string') {
+                        input = input + (input.includes('?') ? '&' : '?') + 't=' + Date.now();
                     }
-                    
-                    // 通知父页面已加载
-                    try {
-                        window.parent.postMessage({ type: 'FRAME_LOADED' }, '*');
-                    } catch (e) {}
-                    
-                    // 修复所有链接
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const links = document.querySelectorAll('a[href^="http:"]');
-                        links.forEach(link => {
-                            link.href = link.href.replace('http:', 'https:');
-                        });
-                    });
-                    
-                    // 处理来自父页面的存储同步
-                    window.addEventListener('message', function(event) {
-                        try {
-                            const data = event.data;
-                            
-                            // 同步localStorage
-                            if (data && data.type === 'SYNC_LOCAL_STORAGE') {
-                                const storage = data.storage || {};
-                                for (const key in storage) {
-                                    try {
-                                        localStorage.setItem(key, storage[key]);
-                                    } catch (e) {
-                                        console.error('Error setting localStorage item:', e);
-                                    }
-                                }
-                            }
-                            
-                            // 同步sessionStorage
-                            if (data && data.type === 'SYNC_SESSION_STORAGE') {
-                                const storage = data.storage || {};
-                                for (const key in storage) {
-                                    try {
-                                        sessionStorage.setItem(key, storage[key]);
-                                    } catch (e) {
-                                        console.error('Error setting sessionStorage item:', e);
-                                    }
-                                }
-                            }
-                            
-                            // 同步cookies
-                            if (data && data.type === 'SYNC_COOKIES') {
-                                const cookies = data.cookies || '';
-                                const cookieList = cookies.split(';');
-                                
-                                cookieList.forEach(cookie => {
-                                    try {
-                                        document.cookie = cookie.trim();
-                                    } catch (e) {
-                                        console.error('Error setting cookie:', e);
-                                    }
-                                });
-                            }
-                        } catch (e) {
-                            console.error('Error processing message:', e);
-                        }
-                    });
-                    
-                    // 将存储变化同步回父页面
-                    const syncStorageToParent = () => {
-                        try {
-                            // 同步localStorage
-                            const localStorageData = {};
-                            for (let i = 0; i < localStorage.length; i++) {
-                                const key = localStorage.key(i);
-                                localStorageData[key] = localStorage.getItem(key);
-                            }
-                            
-                            // 同步sessionStorage
-                            const sessionStorageData = {};
-                            for (let i = 0; i < sessionStorage.length; i++) {
-                                const key = sessionStorage.key(i);
-                                sessionStorageData[key] = sessionStorage.getItem(key);
-                            }
-                            
-                            // 发送到父页面
-                            window.parent.postMessage({
-                                type: 'STORAGE_SYNC_BACK',
-                                localStorage: localStorageData,
-                                sessionStorage: sessionStorageData,
-                                cookies: document.cookie
-                            }, '*');
-                        } catch (e) {
-                            console.error('Error syncing storage to parent:', e);
-                        }
-                    };
-                    
-                    // 监听存储变化
-                    window.addEventListener('storage', syncStorageToParent);
-                    
-                    // 定期同步存储
-                    setInterval(syncStorageToParent, 5000);
-                `;
+                    return originalFetch.call(this, input, init);
+                };
                 
-                // 添加到iframe文档
-                frameDoc.head.appendChild(script);
+                // 重写XMLHttpRequest以确保缓存行为一致
+                const originalXHROpen = frameWindow.XMLHttpRequest.prototype.open;
+                frameWindow.XMLHttpRequest.prototype.open = function(method, url) {
+                    // 确保所有XHR请求都包含时间戳参数以避免缓存
+                    url = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                    return originalXHROpen.apply(this, arguments);
+                };
                 
             } catch (e) {
-                console.log('Cannot inject script due to cross-origin restrictions');
+                console.log('Cannot sync cache headers due to cross-origin restrictions');
             }
         };
         
@@ -479,68 +227,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadContent();
             
-            // 监听来自iframe的存储同步
-            window.addEventListener('message', (event) => {
-                try {
-                    const data = event.data;
-                    
-                    if (data && data.type === 'FRAME_LOADED') {
-                        // iframe已加载完成
-                        document.getElementById('loading').style.display = 'none';
-                    }
-                    
-                    if (data && data.type === 'MIXED_CONTENT_ERROR') {
-                        // 检测到混合内容错误
-                        showFallbackUI();
-                    }
-                    
-                    // 处理从iframe同步回来的存储
-                    if (data && data.type === 'STORAGE_SYNC_BACK') {
-                        // 同步localStorage
-                        const localStorageData = data.localStorage || {};
-                        for (const key in localStorageData) {
-                            try {
-                                localStorage.setItem(key, localStorageData[key]);
-                            } catch (e) {
-                                console.error('Error setting localStorage item:', e);
-                            }
-                        }
-                        
-                        // 同步sessionStorage
-                        const sessionStorageData = data.sessionStorage || {};
-                        for (const key in sessionStorageData) {
-                            try {
-                                sessionStorage.setItem(key, sessionStorageData[key]);
-                            } catch (e) {
-                                console.error('Error setting sessionStorage item:', e);
-                            }
-                        }
-                        
-                        // 同步cookies
-                        const cookies = data.cookies || '';
-                        const cookieList = cookies.split(';');
-                        
-                        cookieList.forEach(cookie => {
-                            try {
-                                document.cookie = cookie.trim();
-                            } catch (e) {
-                                console.error('Error setting cookie:', e);
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.error('Error processing message:', e);
-                }
-            });
-            
-            // 处理键盘快捷键 - 仅保留在浏览器中打开的快捷键
-            document.addEventListener('keydown', (e) => {
-                // Ctrl+O 在浏览器中打开
-                if (e.ctrlKey && e.key === 'o') {
-                    e.preventDefault();
-                    openInBrowser();
-                }
-            });
+            // 微信环境下添加提示
+            if (isWeChat()) {
+                setTimeout(() => {
+                    alert('如需最佳体验，请点击右上角菜单选择"在浏览器中打开"');
+                }, 3000);
+            }
         });
     </script>
 </body>
