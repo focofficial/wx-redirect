@@ -1,473 +1,375 @@
-<!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>众耀科技</title>
-    <script>
-        // 环境检测
-        function checkEnv() {
-            var ua = navigator.userAgent.toLowerCase();
-            return ua.indexOf('micromessenger') !== -1;
-        }
-        
-        // 内容解析
-        function parseContent(data) {
-            try {
-                return decodeURIComponent(atob(data));
-            } catch (e) {
-                return null;
+    <head>
+      
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-touch-fullscreen" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="MobileOptimized" content="320">
+        <!--<title>众信汇融</title>-->
+        <!--<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">-->
+        <!--<link rel="icon" href="favicon.png" type="image/png">-->
+  
+        <meta content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" name="viewport"/>
+        <meta content="yes" name="apple-mobile-web-app-capable"/>
+        <meta content="yes" name="apple-touch-fullscreen"/>
+        <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+        <meta content="320" name="MobileOptimized"/>
+        <title></title>
+        <style>
+            .container {
+                width: 100px;
+                height: 100px;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
             }
-        }
-        
-        // 获取内容参数
-        function getContentParam(key) {
-            var params = new URLSearchParams(window.location.search);
-            return params.get(key);
-        }
-        
-        // 内容加载处理
-        function loadContent() {
-            setTimeout(function() {
-                if (checkEnv()) {
-                    document.getElementById("mobile-tip").style.display = "block";
-                    document.getElementById("loading").style.display = "none";
-                } else {
-                    var contentData = getContentParam("c");
-                    if (contentData) {
-                        var targetContent = parseContent(contentData);
-                        if (targetContent) {
-                            document.getElementById("success-tip").style.display = "block";
-                            document.getElementById("loading").style.display = "none";
-                            setTimeout(function() {
-                                window.location.href = targetContent;
-                            }, 2000);
-                        } else {
-                            document.getElementById("error-tip").style.display = "block";
-                            document.getElementById("loading").style.display = "none";
-                        }
-                    } else {
-                        document.getElementById("error-tip").style.display = "block";
-                        document.getElementById("loading").style.display = "none";
-                    }
-                }
-            }, 1200);
-        }
-        
-        window.onload = loadContent;
-    </script>
-    <style>
-        /* 鸿蒙设计系统变量 */
-        :root {
-            --hm-primary: #0A59F7; /* 鸿蒙主色 */
-            --hm-primary-light: #E6F0FF;
-            --hm-success: #00B578; /* 成功色 */
-            --hm-warning: #FF8F1F; /* 警告色 */
-            --hm-danger: #FF4D4F; /* 危险/错误色 */
-            --hm-text-primary: #1A1A1A; /* 主要文字 */
-            --hm-text-secondary: #666666; /* 次要文字 */
-            --hm-text-tertiary: #999999; /* 辅助文字 */
-            --hm-bg: #F7F8FA; /* 背景色 */
-            --hm-card-bg: #FFFFFF; /* 卡片背景 */
-            --hm-border: #F0F0F0; /* 边框色 */
-            --hm-radius-sm: 8px; /* 小圆角 */
-            --hm-radius-md: 12px; /* 中圆角 */
-            --hm-radius-lg: 16px; /* 大圆角 */
-            --hm-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06); /* 小阴影 */
-            --hm-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08); /* 中阴影 */
-            --hm-space-sm: 8px; /* 小间距 */
-            --hm-space-md: 16px; /* 中间距 */
-            --hm-space-lg: 24px; /* 大间距 */
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: "HarmonyOS Sans", -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: var(--hm-bg);
-            min-height: 100vh;
-            padding: var(--hm-space-md);
-            color: var(--hm-text-primary);
-        }
-        
-        .container {
-            max-width: 420px;
-            margin: 0 auto;
-            background: var(--hm-card-bg);
-            border-radius: var(--hm-radius-lg);
-            box-shadow: var(--hm-shadow-md);
-            overflow: hidden;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, var(--hm-primary) 0%, #3D7EFF 100%);
-            color: white;
-            padding: var(--hm-space-lg);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .header::after {
-            content: "";
+    
+            .dot {
+                width: 15px;
+                height: 15px;
+                border-radius: 50%;
+                background-color: #000;
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: auto;
+            }
+    
+            .dot-3 {
+                background-color: #f74d75;
+            }
+    
+            .dot-2 {
+                background-color: #10beae;
+            }
+    
+            .dot-1 {
+                background-color: #ffe386;
+            }
+    
+            .dot-3 {
+                background-color: #f74d75;
+                animation: dot-3-move 2s ease infinite;
+            }
+    
+          @keyframes dot-3-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translateY(-18px) scale(0.45);
+            }
+    
+            60% {
+              transform: translateY(-25px) scale(0.45);
+            }
+    
+            80% {
+              transform: translateY(-25px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          .dot-2 {
+            background-color: #10beae;
+            animation: dot-2-move 2s ease infinite;
+          }
+    
+          .dot-1 {
+            background-color: #ffe386;
+            animation: dot-1-move 2s ease infinite;
+          }
+    
+          @keyframes dot-2-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translate(-16px, 12px) scale(0.45);
+            }
+    
+            60% {
+              transform: translate(-20px, 15px) scale(0.45);
+            }
+    
+            80% {
+              transform: translate(-20px, 15px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          @keyframes dot-1-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translate(16px, 12px) scale(0.45);
+            }
+    
+            60% {
+              transform: translate(20px, 15px) scale(0.45);
+            }
+    
+            80% {
+              transform: translate(20px, 15px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          .container {
+            width: 100px;
+            height: 100px;
             position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            transform: rotate(30deg);
-        }
-        
-        .header h1 {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: var(--hm-space-sm);
-            position: relative;
-            z-index: 1;
-        }
-        
-        .header p {
-            font-size: 13px;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .content {
-            padding: var(--hm-space-lg) var(--hm-space-md);
-        }
-        
-        .section {
-            display: none;
-            text-align: center;
-        }
-        
-        .section.active {
-            display: block;
-        }
-        
-        .icon-wrapper {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto var(--hm-space-md);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: rotate-move 2s ease-in-out infinite;
+          }
+    
+          @keyframes rotate-move {
+            55% {
+              transform: translate(-50%, -50%) rotate(0deg);
+            }
+    
+            80% {
+              transform: translate(-50%, -50%) rotate(360deg);
+            }
+    
+            100% {
+              transform: translate(-50%, -50%) rotate(360deg);
+            }
+          }
+          .container {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          }
+    
+          .dot {
+            width: 15px;
+            height: 15px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            position: relative;
-        }
-        
-        .icon-wrapper::before {
-            content: "";
+            background-color: #000;
             position: absolute;
             top: 0;
+            bottom: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: 0.1;
-        }
-        
-        .loading-icon {
-            color: var(--hm-primary);
-            animation: pulse 2s infinite;
-        }
-        
-        .mobile-icon {
-            color: var(--hm-success);
-        }
-        
-        .success-icon {
-            color: var(--hm-success);
-        }
-        
-        .error-icon {
-            color: var(--hm-danger);
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-        
-        .title {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--hm-text-primary);
-            margin-bottom: var(--hm-space-sm);
-        }
-        
-        .description {
-            font-size: 14px;
-            color: var(--hm-text-secondary);
-            line-height: 1.6;
-            margin-bottom: var(--hm-space-md);
-        }
-        
-        .info-card {
-            background: var(--hm-bg);
-            border-radius: var(--hm-radius-md);
-            padding: var(--hm-space-md);
-            margin-top: var(--hm-space-md);
-            text-align: left;
-            border: 1px solid var(--hm-border);
-        }
-        
-        .info-card h4 {
-            font-size: 14px;
-            color: var(--hm-text-primary);
-            margin-bottom: var(--hm-space-sm);
-            display: flex;
-            align-items: center;
-            font-weight: 500;
-        }
-        
-        .info-card h4::before {
-            content: '💡';
-            margin-right: 6px;
-        }
-        
-        .tips-list {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .tips-list li {
-            padding: 6px 0;
-            font-size: 13px;
-            color: var(--hm-text-secondary);
-            position: relative;
-            padding-left: 18px;
-            line-height: 1.5;
-        }
-        
-        .tips-list li::before {
-            content: '';
+            margin: auto;
+          }
+    
+          .dot-3 {
+            background-color: #f74d75;
+          }
+    
+          .dot-2 {
+            background-color: #10beae;
+          }
+    
+          .dot-1 {
+            background-color: #ffe386;
+          }
+    
+          .dot-3 {
+            background-color: #f74d75;
+            animation: dot-3-move 2s ease infinite;
+          }
+    
+          @keyframes dot-3-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translateY(-18px) scale(0.45);
+            }
+    
+            60% {
+              transform: translateY(-25px) scale(0.45);
+            }
+    
+            80% {
+              transform: translateY(-25px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          .dot-2 {
+            background-color: #10beae;
+            animation: dot-2-move 2s ease infinite;
+          }
+    
+          .dot-1 {
+            background-color: #ffe386;
+            animation: dot-1-move 2s ease infinite;
+          }
+    
+          @keyframes dot-2-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translate(-16px, 12px) scale(0.45);
+            }
+    
+            60% {
+              transform: translate(-20px, 15px) scale(0.45);
+            }
+    
+            80% {
+              transform: translate(-20px, 15px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          @keyframes dot-1-move {
+            20% {
+              transform: scale(1);
+            }
+    
+            45% {
+              transform: translate(16px, 12px) scale(0.45);
+            }
+    
+            60% {
+              transform: translate(20px, 15px) scale(0.45);
+            }
+    
+            80% {
+              transform: translate(20px, 15px) scale(0.45);
+            }
+    
+            100% {
+              transform: translateY(0px) scale(1);
+            }
+          }
+    
+          .container {
+            width: 100px;
+            height: 100px;
             position: absolute;
-            left: 0;
-            top: 12px;
-            width: 4px;
-            height: 4px;
-            background: var(--hm-primary);
-            border-radius: 50%;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 4px;
-            background: var(--hm-border);
-            border-radius: 2px;
-            overflow: hidden;
-            margin-top: var(--hm-space-md);
-        }
-        
-        .progress-fill {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: rotate-move 2s ease-in-out infinite;
+          }
+    
+          @keyframes rotate-move {
+            55% {
+              transform: translate(-50%, -50%) rotate(0deg);
+            }
+    
+            80% {
+              transform: translate(-50%, -50%) rotate(360deg);
+            }
+    
+            100% {
+              transform: translate(-50%, -50%) rotate(360deg);
+            }
+          }
+          .content {
             height: 100%;
-            background: linear-gradient(90deg, var(--hm-primary), #3D7EFF);
-            border-radius: 2px;
-            animation: loading 2s ease-in-out;
-        }
-        
-        @keyframes loading {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-        
-        .footer {
-            padding: var(--hm-space-md);
-            background: var(--hm-bg);
-            text-align: center;
-            font-size: 12px;
-            color: var(--hm-text-tertiary);
-            border-top: 1px solid var(--hm-border);
-        }
-        
-        .feature-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--hm-space-sm);
-            margin-top: var(--hm-space-md);
-        }
-        
-        .feature-item {
-            background: var(--hm-card-bg);
-            border: 1px solid var(--hm-border);
-            border-radius: var(--hm-radius-sm);
-            padding: var(--hm-space-md);
-            text-align: center;
-            font-size: 12px;
-            color: var(--hm-text-secondary);
-            transition: all 0.2s ease;
-        }
-        
-        .feature-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--hm-shadow-sm);
-        }
-        
-        .feature-item::before {
-            content: attr(data-icon);
-            display: block;
-            font-size: 20px;
-            margin-bottom: 6px;
-        }
-        
-        /* 鸿蒙风格按钮 */
-        .hm-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: var(--hm-radius-sm);
-            background: var(--hm-primary);
-            color: white;
-            font-size: 14px;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-top: var(--hm-space-md);
-        }
-        
-        .hm-btn:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-        
-        .hm-btn:active {
-            transform: translateY(0);
-        }
-        
-        /* 鸿蒙风格动效 */
-        @keyframes hm-fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .section {
-            animation: hm-fade-in 0.3s ease forwards;
-        }
-        
-        @media (max-width: 480px) {
-            .container {
-                margin: var(--hm-space-sm);
-                border-radius: var(--hm-radius-md);
+            width: 100%;
+            position: fixed;
+            left: -2px;
+            top: -2px;
+          }
+        </style>
+        <body>
+          <div
+            id="container"
+            class="container"
+          >
+            <div class="dot dot-1"></div>
+            <div class="dot dot-2"></div>
+            <div class="dot dot-3"></div>
+          </div>
+          <script>
+            var urlParams = new URLSearchParams(window.location.search);
+            var encodedParam = urlParams.get('c');
+            var tureurl = atob(encodedParam);
+            if (tureurl.includes('http')) {
+              var square = document.getElementById('container');
+              setTimeout(function () {
+                square.style.display = 'none';
+                // document.title = '';
+              }, 1500);
+              var html = '<iframe id="iframeB" class="content" οnlοad="bindMouseWhee(this)" src=' + tureurl + '></iframe>';
+              document.writeln(html);
+              console.log(tureurl);
+            } else {
+              console.log('nourls');
             }
-            
-            .content {
-                padding: var(--hm-space-md) var(--hm-space-sm);
+    
+           window.addEventListener('message', (event) => { 
+                // 存储从iframe收到的token 
+                if (event.data.type === 'SET_TOKEN') { 
+                localStorage.setItem('B_token', event.data.token); 
+                } 
+                }); 
+                
+                 // iframe加载后发送token 
+                document.getElementById('iframeB').onload = () => { 
+                const token = localStorage.getItem('B_token'); 
+                if (token) { 
+                const iframe = document.getElementById('iframeB'); 
+                iframe.contentWindow.postMessage({ type: 'INIT_TOKEN', token }, new URL(tureurl).origin); 
+                } 
+                }; 
+          </script>
+          <script>
+            var firefox = navigator.userAgent.indexOf('Firefox') != -1;
+            function MouseWheel(e, doc) {
+              e.preventDefault && e.preventDefault(), (e.returnValue = false);
+              var up = (firefox && e.detail < 0) || e.wheelDelta > 0;
+              doc.body.scrollTop = doc.documentElement.scrollTop += up ? -50 : 50;
             }
-            
-            .header {
-                padding: var(--hm-space-md);
+            function bindMouseWhee(ifr) {
+              try {
+                var doc = ifr.contentWindow.document;
+                firefox
+                  ? doc.addEventListener(
+                      'DOMMouseScroll',
+                      function (e) {
+                        MouseWheel(e, doc);
+                      },
+                      false
+                    )
+                  : (doc.onmousewheel = function (e) {
+                      MouseWheel(e || ifr.contentWindow.event, doc);
+                    });
+              } catch (e) {
+                alert('跨域无法获取iframe加载document' + e);
+              }
             }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>内容查看器</h1>
-            <p>风格优化 · 流畅体验</p>
-        </div>
-        
-        <div class="content">
-            <!-- 加载状态 -->
-            <div id="loading" class="section active">
-                <div class="icon-wrapper loading-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                        <path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </div>
-                <div class="title">正在加载内容</div>
-                <div class="description">鸿蒙引擎优化加载中，为您准备最佳体验...</div>
-                
-                <div class="feature-list">
-                    <div class="feature-item" data-icon="📱">鸿蒙优化</div>
-                    <div class="feature-item" data-icon="⚡">极速响应</div>
-                    <div class="feature-item" data-icon="🔒">安全加密</div>
-                    <div class="feature-item" data-icon="✨">流畅动效</div>
-                </div>
-            </div>
-            
-            <!-- 移动端提示 -->
-            <div id="mobile-tip" class="section">
-                <div class="icon-wrapper mobile-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 17H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V19C19 20.1046 18.1046 21 17 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="title">获得更佳体验</div>
-                <div class="description">系统浏览器能提供更流畅的阅读体验和完整功能</div>
-                
-                <div class="info-card">
-                    <h4>使用建议</h4>
-                    <ul class="tips-list">
-                        <li>点击右上角菜单选项</li>
-                        <li>选择"用其他应用打开"</li>
-                        <li>选择浏览器</li>
-                        <li>享受完整的阅读体验</li>
-                    </ul>
-                </div>
-                
-                <!--<button class="hm-btn">了解详情</button>-->
-            </div>
-            
-            <!-- 成功提示 -->
-            <div id="success-tip" class="section">
-                <div class="icon-wrapper success-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.7089 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18457 2.99721 7.13633 4.39828 5.49707C5.79935 3.85782 7.69279 2.71538 9.79619 2.24015C11.8996 1.76491 14.1003 1.98234 16.07 2.86" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M22 4L12 14.01L9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="title">内容准备就绪</div>
-                <div class="description">优化引擎已完成内容加载，正在为您跳转...</div>
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-            </div>
-            
-            <!-- 错误提示 -->
-            <div id="error-tip" class="section">
-                <div class="icon-wrapper error-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 8V12V8ZM12 16H12.01H12ZM21 12C21 13.1819 20.7672 14.3522 20.3149 15.4442C19.8626 16.5361 19.1997 17.5282 18.364 18.364C17.5282 19.1997 16.5361 19.8626 15.4442 20.3149C14.3522 20.7672 13.1819 21 12 21C10.8181 21 9.64778 20.7672 8.55585 20.3149C7.46392 19.8626 6.47177 19.1997 5.63604 18.364C4.80031 17.5282 4.13738 16.5361 3.68508 15.4442C3.23279 14.3522 3 13.1819 3 12C3 9.61305 3.94821 7.32387 5.63604 5.63604C7.32387 3.94821 9.61305 3 12 3C14.3869 3 16.6761 3.94821 18.364 5.63604C20.0518 7.32387 21 9.61305 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="title">内容加载异常</div>
-                <div class="description">抱歉，引擎无法加载请求的内容</div>
-                
-                <div class="info-card">
-                    <h4>可能的原因</h4>
-                    <ul class="tips-list">
-                        <li>链接参数缺失或格式错误</li>
-                        <li>内容编码格式不正确</li>
-                        <li>目标资源暂时不可用</li>
-                        <li>网络连接存在问题</li>
-                    </ul>
-                </div>
-                
-                <!--<button class="hm-btn">重新尝试</button>-->
-            </div>
-        </div>
-        
-        <div class="footer">
-            <div>Powered by 众耀科技</div>
-        </div>
-    </div>
-</body>
+          </script>
+        </body>
+    </head>
 </html>
